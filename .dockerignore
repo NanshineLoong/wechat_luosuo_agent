@@ -1,0 +1,17 @@
+.git
+.github
+.env
+.venv
+.pytest_cache
+__pycache__
+*.py[cod]
+*.log
+htmlcov
+instances
+deploy.env
+.deploy.local.env
+deploy
+docs
+tests
+pydantic-ai
+wechatbot

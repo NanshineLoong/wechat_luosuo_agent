@@ -1,0 +1,37 @@
+services:
+  bot:
+    image: "${BOT_IMAGE:?BOT_IMAGE is required}"
+    restart: unless-stopped
+    init: true
+    env_file:
+      - "${BOT_SHARED_ENV_FILE:?BOT_SHARED_ENV_FILE is required}"
+    environment:
+      WECHAT_CRED_PATH: /data/credentials.json
+    volumes:
+      - credentials:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    stop_grace_period: 50s
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "from pathlib import Path; raise SystemExit(0 if Path('/data/credentials.json').stat().st_size > 0 else 1)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+volumes:
+  credentials:

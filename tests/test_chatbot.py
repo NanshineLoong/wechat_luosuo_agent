@@ -17,6 +17,7 @@ from app import (
     build_agent,
     handle_message,
     load_settings,
+    run_bot,
 )
 
 models.ALLOW_MODEL_REQUESTS = False
@@ -63,6 +64,21 @@ class FakeBot:
         self.replies.append((msg, text))
 
 
+class FakeLifecycleBot:
+    def __init__(self) -> None:
+        self.login_calls: list[bool] = []
+        self.start_calls = 0
+
+    async def login(self, *, force: bool = False) -> None:
+        self.login_calls.append(force)
+
+    async def start(self) -> None:
+        self.start_calls += 1
+
+    def stop(self) -> None:
+        pass
+
+
 def make_message(text: str = "你好", message_type: str = "text") -> IncomingMessage:
     return IncomingMessage(
         user_id="user-1",
@@ -96,6 +112,38 @@ def test_load_settings_defaults_to_openai() -> None:
     assert settings.base_url is None
     assert settings.timeout_seconds == 60
     assert settings.max_tokens == 800
+    assert settings.wechat_cred_path is None
+
+
+def test_load_settings_accepts_wechat_credential_path() -> None:
+    settings = load_settings(
+        {
+            "AI_MODEL": "gpt-test",
+            "AI_API_KEY": "secret",
+            "WECHAT_CRED_PATH": "/data/credentials.json",
+        }
+    )
+
+    assert settings.wechat_cred_path == "/data/credentials.json"
+
+
+@pytest.mark.asyncio
+async def test_login_only_saves_credentials_without_starting_poller() -> None:
+    bot = FakeLifecycleBot()
+
+    await run_bot(bot, login_only=True)  # type: ignore[arg-type]
+
+    assert bot.login_calls == [False]
+    assert bot.start_calls == 0
+
+
+@pytest.mark.asyncio
+async def test_force_login_is_forwarded_to_wechat_sdk() -> None:
+    bot = FakeLifecycleBot()
+
+    await run_bot(bot, login_only=True, force_login=True)  # type: ignore[arg-type]
+
+    assert bot.login_calls == [True]
 
 
 @pytest.mark.parametrize("name", ["AI_MODEL", "AI_API_KEY"])

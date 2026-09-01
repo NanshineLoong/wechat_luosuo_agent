@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import argparse
 import asyncio
 import logging
 import os
+import signal
 from dataclasses import dataclass
 from typing import Literal, Mapping, Protocol
 
@@ -33,6 +35,7 @@ class Settings:
     timeout_seconds: float
     max_tokens: int
     instructions: str = DEFAULT_INSTRUCTIONS
+    wechat_cred_path: str | None = None
 
 
 class AgentResult(Protocol):
@@ -89,6 +92,7 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
 
     base_url = environ.get("AI_BASE_URL", "").strip() or None
     instructions = environ.get("AI_INSTRUCTIONS", "").strip() or DEFAULT_INSTRUCTIONS
+    wechat_cred_path = environ.get("WECHAT_CRED_PATH", "").strip() or None
 
     return Settings(
         provider=provider,
@@ -98,6 +102,7 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
         timeout_seconds=_positive_float(environ, "AI_TIMEOUT_SECONDS", "60"),
         max_tokens=_positive_int(environ, "AI_MAX_TOKENS", "800"),
         instructions=instructions,
+        wechat_cred_path=wechat_cred_path,
     )
 
 
@@ -167,6 +172,7 @@ def _report_wechat_error(error: Exception) -> None:
 
 def build_bot(agent: ChatAgent, settings: Settings) -> WeChatBot:
     bot = WeChatBot(
+        cred_path=settings.wechat_cred_path,
         on_qr_url=_show_qr_url,
         on_error=_report_wechat_error,
         bot_agent="WechatAIChatbot/0.1.0",
@@ -179,6 +185,43 @@ def build_bot(agent: ChatAgent, settings: Settings) -> WeChatBot:
     return bot
 
 
+async def run_bot(
+    bot: WeChatBot,
+    *,
+    login_only: bool = False,
+    force_login: bool = False,
+) -> None:
+    await bot.login(force=force_login)
+    if login_only:
+        logger.info("微信登录凭证已保存")
+        return
+
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        try:
+            loop.add_signal_handler(sig, bot.stop)
+        except (NotImplementedError, RuntimeError):
+            # add_signal_handler is unavailable on some platforms/event loops.
+            pass
+
+    await bot.start()
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="微信 AI Chatbot")
+    parser.add_argument(
+        "--login-only",
+        action="store_true",
+        help="完成微信扫码登录并保存凭证后退出",
+    )
+    parser.add_argument(
+        "--force-login",
+        action="store_true",
+        help="忽略已有凭证并重新完成微信扫码登录",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
     logging.basicConfig(
         level=logging.INFO,
@@ -187,6 +230,7 @@ def main() -> None:
     settings = load_settings()
     agent = build_agent(settings)
     bot = build_bot(agent, settings)
+    args = _parse_args()
 
     logger.info(
         "机器人启动，provider=%s，model=%s，base_url=%s",
@@ -194,10 +238,14 @@ def main() -> None:
         settings.model,
         settings.base_url or "provider default",
     )
-    try:
-        bot.run()
-    except KeyboardInterrupt:
-        logger.info("收到停止信号，机器人已退出")
+    asyncio.run(
+        run_bot(
+            bot,
+            login_only=args.login_only,
+            force_login=args.force_login,
+        )
+    )
+    logger.info("机器人已退出")
 
 
 if __name__ == "__main__":

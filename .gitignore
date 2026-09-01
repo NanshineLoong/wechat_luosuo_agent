@@ -6,3 +6,8 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
+instances/
+deploy.env
+.deploy.local.env
+/pydantic-ai/
+/wechatbot/

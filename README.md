@@ -10,7 +10,7 @@
 - 可以扫码确认的微信客户端
 - OpenAI Chat Completions 或 Anthropic Messages 兼容的模型 API
 
-仓库中的 `pydantic-ai/` 与 `wechatbot/` 目录仅用于阅读上游源码，本项目运行时不会导入它们；实际依赖来自 `requirements.txt` 中固定的 PyPI 发布版本。
+本地如存在 `pydantic-ai/` 与 `wechatbot/` 目录，它们仅用于阅读上游源码且已被 Git 忽略，本项目运行时不会导入它们；实际依赖来自 `requirements.txt` 中固定的 PyPI 发布版本。
 
 ## 安装
 
@@ -71,6 +71,20 @@ python app.py
 首次启动时终端会打印二维码内容地址，在浏览器中打开后使用微信扫码并确认；登录凭证由 SDK 默认保存到 `~/.wechatbot/credentials.json`，正常情况下重启无需再次扫码。按 `Ctrl+C` 停止机器人。
 
 同一个微信 Bot 账号不要同时运行多个进程，否则多个长轮询实例可能互相干扰消息游标。
+
+只完成扫码登录并保存凭证、不启动消息轮询时，可以运行：
+
+```bash
+python app.py --login-only
+```
+
+忽略已有凭证并强制重新扫码时，增加 `--force-login`。
+
+可通过 `WECHAT_CRED_PATH` 指定凭证文件位置；这主要用于容器化多实例部署，本地留空时仍使用 `~/.wechatbot/credentials.json`。
+
+## 腾讯云 Lighthouse 多实例部署
+
+仓库包含非 root Docker 镜像、每位朋友独立凭证卷的 Compose 配置，以及从本地 Mac 通过 SSH 一键上传源码、在 Lighthouse 构建镜像并更新全部实例的发布脚本；本地无需 Docker，GitHub Actions 只负责运行测试，也不需要配置云端部署 Secrets。所有朋友共用服务器上唯一的模型 API 配置，微信凭证仍彼此隔离；完整的初始化、发布、扫码和运维步骤见 [部署文档](docs/DEPLOY_LIGHTHOUSE.md)。
 
 ## 行为说明
 
