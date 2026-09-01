@@ -10,7 +10,11 @@ RUN groupadd --gid 10001 bot \
 WORKDIR /app
 
 COPY requirements.txt ./
-RUN python -m pip install --no-cache-dir -r requirements.txt
+ARG PIP_INDEX_URL=https://mirrors.cloud.tencent.com/pypi/simple
+RUN python -m pip install \
+    --no-cache-dir \
+    --index-url "$PIP_INDEX_URL" \
+    -r requirements.txt
 
 COPY --chown=bot:bot app.py ./
 

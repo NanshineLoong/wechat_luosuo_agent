@@ -81,7 +81,7 @@ DEPLOY_IMAGE_REPOSITORY=wechat-luosuo-agent
 1. 使用本地 `.venv` 或 `python3` 运行 `pytest`；
 2. 严格校验固定的 SSH Host Key；
 3. 上传 Dockerfile、运行源码、Compose 与部署脚本；
-4. 在 Lighthouse 上构建以 Git Commit SHA 命名的镜像；
+4. 通过腾讯云 PyPI 镜像源在 Lighthouse 上构建以 Git Commit SHA 命名的镜像；
 5. 逐个重建已有实例并等待健康检查；
 6. 全部成功后更新 `deploy.env`，失败则尝试回滚所有实例到上一镜像。
 
