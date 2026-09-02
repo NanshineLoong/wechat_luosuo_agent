@@ -84,7 +84,7 @@ python app.py --login-only
 
 ## 腾讯云 Lighthouse 多实例部署
 
-仓库包含非 root Docker 镜像、每位朋友独立凭证卷的 Compose 配置，以及从本地 Mac 通过 SSH 一键上传源码、在 Lighthouse 构建镜像并更新全部实例的发布脚本；本地无需 Docker，GitHub Actions 只负责运行测试，也不需要配置云端部署 Secrets。所有朋友共用服务器上唯一的模型 API 配置，微信凭证仍彼此隔离；完整的初始化、发布、扫码和运维步骤见 [部署文档](docs/DEPLOY_LIGHTHOUSE.md)。
+仓库包含非 root Docker 镜像、每位朋友独立凭证卷的 Compose 配置，以及统一的本地 `manage.sh`：`./manage.sh deploy` 通过 SSH 上传源码、在 Lighthouse 构建镜像并更新全部实例，`./manage.sh env` 安全同步本地 `.env` 中的模型配置，`./manage.sh add alice` 则创建、扫码登录并启动新实例。本地无需 Docker，GitHub Actions 只负责运行测试，也不需要配置云端部署 Secrets；完整说明见 [部署文档](docs/DEPLOY_LIGHTHOUSE.md)。
 
 ## 行为说明
 

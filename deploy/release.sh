@@ -87,6 +87,7 @@ scp "${scp_args[@]}" \
   "$target:$stage/"
 scp "${scp_args[@]}" \
   "$ROOT_DIR/deploy/manage.sh" \
+  "$ROOT_DIR/deploy/server-sync-env.sh" \
   "$ROOT_DIR/deploy/server-update.sh" \
   "$ROOT_DIR/deploy/shared.env.example" \
   "$target:$stage/deploy/"

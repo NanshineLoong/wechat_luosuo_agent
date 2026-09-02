@@ -29,7 +29,8 @@ trap cleanup EXIT
 
 for required_file in \
   Dockerfile app.py compose.yaml requirements.txt \
-  deploy/manage.sh deploy/server-update.sh deploy/shared.env.example; do
+  deploy/manage.sh deploy/server-sync-env.sh \
+  deploy/server-update.sh deploy/shared.env.example; do
   [[ -f "$STAGE_DIR/$required_file" ]] || {
     printf '错误：构建目录缺少 %s\n' "$required_file" >&2
     exit 1
@@ -47,6 +48,7 @@ docker build --tag "$NEW_IMAGE" "$STAGE_DIR"
 install -d -m 700 "$ROOT_DIR/deploy" "$ROOT_DIR/instances"
 install -m 600 "$STAGE_DIR/compose.yaml" "$ROOT_DIR/compose.yaml"
 install -m 700 "$STAGE_DIR/deploy/manage.sh" "$ROOT_DIR/deploy/manage.sh"
+install -m 700 "$STAGE_DIR/deploy/server-sync-env.sh" "$ROOT_DIR/deploy/server-sync-env.sh"
 install -m 700 "$STAGE_DIR/deploy/server-update.sh" "$ROOT_DIR/deploy/server-update.sh"
 install -m 600 "$STAGE_DIR/deploy/shared.env.example" "$ROOT_DIR/deploy/shared.env.example"
 
